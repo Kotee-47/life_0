@@ -57,7 +57,6 @@ while 1:
         pygame.draw.line(root, BLACK, (0, i * 20), (root.get_width(), i * 20))
     for j in range(0, root.get_width() // 20):
         pygame.draw.line(root, BLACK, (j * 20, 0), (j * 20, root.get_height()))
-    # Нужно чтобы виндовс не думал что программа "не отвечает"
     for i in pygame.event.get():
         if i.type == QUIT:
             quit()
