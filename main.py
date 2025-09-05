@@ -19,7 +19,7 @@ ckl = 0
 speed = 200
 fast = False
 slow = False
-textrect = pygame.Rect(10, 10, 100, 30)
+textrect = pygame.Rect(10, 10, 200, 35)
 font = pygame.font.SysFont('Segoe UI', 36, True)
 
 
@@ -100,3 +100,12 @@ while 1:
                     continue
                 cells2[i][j] = 0
         cells = cells2
+    if pause:
+        for i in range(0, len(cells)):
+            for j in range(0, len(cells[i])):
+                pygame.draw.rect(root, (255 * cells[i][j] % 256, 0, 0), [i * 20, j * 20, 20, 20])
+        pygame.draw.rect(root, 'blue', textrect)
+        text_surface = font.render((str(speed) + ' Pause'), True, 'black')
+        text_rect = text_surface.get_rect(center=textrect.center)
+        root.blit(text_surface, text_rect)
+        pygame.display.update()
