@@ -73,6 +73,9 @@ while 1:
             fast = True
         if key[pygame.K_DOWN]:
             slow = True
+        if key[pygame.K_BACKSPACE]:
+            cells = [[random.choice([0, 1]) for j in range(root.get_width() // 20)] for i in
+                     range(root.get_height() // 20)]
 
     # Проходимся по всем клеткам
 
