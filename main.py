@@ -1,10 +1,52 @@
 # Импорты
-import time
 
 import pygame
 import random
 from pygame.locals import *
 from time import sleep
+
+
+class Cell:
+    def __init__(self, energy=50, ctype=None, dna=None):
+        self.type = ctype
+        self.dna = dna
+        self.energy = energy
+        if self.type == 'fat':
+            self.maxenergy = 500
+        elif self.type == 'transfer':
+            self.maxenergy = 50
+        else:
+            self.maxenergy = 100
+        if self.type == 'grow' and dna is None:
+            self.dna = [random.choice([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) for _ in range(40)]
+        self.sun = 100
+        self.sunrise = False
+        self.food = 0
+        self.system = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
+
+    def update(self, pos: list, cells):
+        self.energy -= 5
+
+        if 0 <= self.sun <= 100:
+            if self.sun >= 100:
+                self.sunrise = False
+            if self.sun <= 0:
+                self.sunrise = True
+            if self.sunrise:
+                self.sun += 1
+            else:
+                self.sun -= 1
+
+        if self.type == 'leaf':
+            self.energy += self.sun // 10
+
+        if self.type == 'transport':
+
+            count = 0
+            for i in self.system:
+                if cells[(pos[0] + i[0]) % len(cells)][(pos[1] + i[1]) % len(cells[0])]:
+                    count += 1
+
 
 # Константы цветов RGB
 BLACK = (0, 0, 0)
@@ -14,6 +56,7 @@ pygame.init()
 root = pygame.display.set_mode((1000, 1000))
 # 2х мерный список с помощью генераторных выражений
 cells = [[random.choice([0, 1]) for j in range(root.get_width() // 20)] for i in range(root.get_height() // 20)]
+types = ['wall', 'grow', 'leaf', 'fat', 'transfer']
 pause = False
 ckl = 0
 speed = 200
@@ -24,7 +67,9 @@ font = pygame.font.SysFont('Segoe UI', 36, True)
 
 
 # Функция определения кол-ва соседей
-def near(pos: list, system=[[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]):
+def near(pos: list, system=None):
+    if system is None:
+        system = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
     count = 0
     for i in system:
         if cells[(pos[0] + i[0]) % len(cells)][(pos[1] + i[1]) % len(cells[0])]:
