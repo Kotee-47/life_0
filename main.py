@@ -7,7 +7,7 @@ from time import sleep
 
 
 class Cell:
-    def __init__(self, energy=50, ctype=None, dna=None):
+    def __init__(self, ctype=None, dna=None, energy=50):
         self.type = ctype
         self.dna = dna
         self.energy = energy
@@ -24,8 +24,10 @@ class Cell:
         self.food = 0
         self.system = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
 
-    def update(self, pos: list, cells):
+    def update(self, cells, pos: list):
         self.energy -= 5
+        if self.energy <= 0:
+            self.type = None
 
         if 0 <= self.sun <= 100:
             if self.sun >= 100:
@@ -40,12 +42,18 @@ class Cell:
         if self.type == 'leaf':
             self.energy += self.sun // 10
 
-        if self.type == 'transport':
-
-            count = 0
+        if self.type == 'fat':
+            print(pos[0])
             for i in self.system:
                 if cells[(pos[0] + i[0]) % len(cells)][(pos[1] + i[1]) % len(cells[0])]:
-                    count += 1
+                    if cells[(pos[0] + i[0]) % len(cells)][(pos[1] + i[1]) % len(cells[0])].energy > 60:
+                        cells[(pos[0] + i[0]) % len(cells)][(pos[1] + i[1]) % len(cells[0])].energy -= 10
+                        self.energy += 10
+                    else:
+                        self.energy -= 20
+                        cells[(pos[0] + i[0]) % len(cells)][(pos[1] + i[1]) % len(cells[0])].energy += 20
+
+        return cells
 
 
 # Константы цветов RGB
@@ -55,8 +63,8 @@ WHITE = (255, 255, 255)
 pygame.init()
 root = pygame.display.set_mode((1000, 1000))
 # 2х мерный список с помощью генераторных выражений
-cells = [[random.choice([0, 1]) for j in range(root.get_width() // 20)] for i in range(root.get_height() // 20)]
 types = ['wall', 'grow', 'leaf', 'fat', 'transfer']
+cells = [[Cell(ctype=random.choice(types)) for j in range(root.get_width() // 20)] for i in range(root.get_height() // 20)]
 pause = False
 ckl = 0
 speed = 200
@@ -119,34 +127,31 @@ while 1:
         if key[pygame.K_DOWN]:
             slow = True
         if key[pygame.K_BACKSPACE]:
-            cells = [[random.choice([0, 1]) for j in range(root.get_width() // 20)] for i in
-                     range(root.get_height() // 20)]
+            cells = [[Cell(ctype=random.choice(types)) for j in range(root.get_width() // 20)] for i in range(root.get_height() // 20)]
 
     # Проходимся по всем клеткам
 
     if not pause and ckl == 0:
         for i in range(0, len(cells)):
             for j in range(0, len(cells[i])):
-                pygame.draw.rect(root, (255 * cells[i][j] % 256, 0, 0), [i * 20, j * 20, 20, 20])
+                sun = cells[i][j].sun
+                if cells[i][j].type == None:
+                    pygame.draw.rect(root, (0 + sun, 0 + sun, 0 + sun), [i * 20, j * 20, 20, 20])
+                elif cells[i][j].type == 'leaf':
+                    pygame.draw.rect(root, (0 + sun, 155 + sun, 0 + sun), [i * 20, j * 20, 20, 20])
+                elif cells[i][j].type == 'fat':
+                    pygame.draw.rect(root, (150 + sun, 120 + sun, 120 + sun), [i * 20, j * 20, 20, 20])
+                else:
+                    pygame.draw.rect(root, (0 + sun, 0 + sun, 0 + sun), [i * 20, j * 20, 20, 20])
         # Обновляем экран
         pygame.draw.rect(root, 'blue', textrect)
         text_surface = font.render(str(speed), True, 'black')
         text_rect = text_surface.get_rect(center=textrect.center)
         root.blit(text_surface, text_rect)
         pygame.display.update()
-        cells2 = [[0 for j in range(len(cells[0]))] for i in range(len(cells))]
         for i in range(len(cells)):
             for j in range(len(cells[0])):
-                if cells[i][j]:
-                    if near([i, j]) not in (2, 3):
-                        cells2[i][j] = 0
-                        continue
-                    cells2[i][j] = 1
-                    continue
-                if near([i, j]) == 3:
-                    cells2[i][j] = 1
-                    continue
-                cells2[i][j] = 0
+                cells2 = cells[i][j].update(cells, cells)
         cells = cells2
     if pause:
         for i in range(0, len(cells)):
